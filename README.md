@@ -1,1 +1,1 @@
-Assets used by a HTML minios that im working on.
+Assets used by a HTML x Javascript x CSS mini os that im working on.
