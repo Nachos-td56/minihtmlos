@@ -163,7 +163,7 @@ document.addEventListener("DOMContentLoaded", async () => {
 
     let validKeys = [];
     try {
-        const res = await fetch("https://raw.githubusercontent.com/Nachos-td56/minihtmlos/main/core/keys/keys.json");
+        const res = await fetch("core/keys/keys.json");
         const raw = await res.json();
         validKeys = Array.isArray(raw.keys) ? raw.keys : [];
     } catch (e) {
