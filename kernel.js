@@ -332,9 +332,9 @@ document.addEventListener("DOMContentLoaded", async () => {
     function renderExplorer(container) {
         const keys = Object.keys(fileSystem).sort();
         let html = `<div style="display:flex;gap:8px;margin-bottom:8px">
-                        <button id="newfile">+ New</button>
-                        <button id="refresh">Refresh</button>
-                    </div>`;
+                       <button id="newfile" class="explorer-button">+ New</button>
+                       <button id="refresh" class="explorer-button">Refresh</button>
+                   </div>`;
         html += `<ul style="padding-left:14px">`;
         if (!keys.length) html += `<li><i>No files</i></li>`;
         else keys.forEach(k => html += `<li data-file="${k}" style="padding:6px;border-radius:6px;cursor:default">📄 ${k}</li>`);
