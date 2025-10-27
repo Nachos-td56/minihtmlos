@@ -162,7 +162,7 @@ document.addEventListener("DOMContentLoaded", async () => {
 
     let validKeys = [];
     try {
-        const res = await fetch("main/core/keys/keys.json");
+        const res = await fetch("core/keys/keys.json");
         const raw = await res.json();
         validKeys = Array.isArray(raw.keys) ? raw.keys : [];
     } catch (e) {
