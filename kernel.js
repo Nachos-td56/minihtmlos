@@ -93,7 +93,8 @@ function addTaskbarButton(id, app, title) {
         notepad: "📝",
         terminal: "💻",
         snake: "🐍",
-        pong: "🏓"
+        pong: "🏓",
+		cube: "🧊"
     };
     btn.innerText = iconMap[app] || "•";
 
@@ -162,14 +163,13 @@ document.addEventListener("DOMContentLoaded", async () => {
 
     let validKeys = [];
     try {
-        const res = await fetch("core/keys/keys.json");
+        const res = await fetch("https://raw.githubusercontent.com/Nachos-td56/minihtmlos/main/core/keys/keys.json");
         const raw = await res.json();
         validKeys = Array.isArray(raw.keys) ? raw.keys : [];
     } catch (e) {
         console.error("Failed to load keys:", e);
     }
 
-    // Disk init
     let disk = JSON.parse(localStorage.getItem("MiniOS_Disk") || "{}");
     if (!disk.accounts) disk.accounts = {};
     if (!disk.files) disk.files = {};
@@ -311,7 +311,8 @@ document.addEventListener("DOMContentLoaded", async () => {
         notepad: (filename, content) => openNotepad(filename, content),
         terminal: () => openTerminal(),
         snake: () => openSnakeGame(),
-        pong: () => openPongGame()
+        pong: () => openPongGame(),
+		cube: () => openCubeApp()
     };
 
     [...icons, ...startMenu.querySelectorAll("[data-app]")].forEach(el => {
