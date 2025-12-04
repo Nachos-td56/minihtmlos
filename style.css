@@ -13,9 +13,61 @@ html,body {
   height: 100vh;
   background-image: url('images/wallpaper1920by1080.png');
   background-size: cover;
-  background-position: center center;
+  background-position: center;
   position: relative;
   -webkit-font-smoothing: antialiased;
+  overflow: hidden;
+}
+
+#desktop::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  backdrop-filter: blur(0.8px) saturate(140%);
+  background: rgba(11,18,32,0.25);
+  z-index: 0;
+}
+
+#desktop-particles {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  z-index: 0;
+}
+
+.desktop-particle {
+  position: absolute;
+  width: 3px;
+  height: 3px;
+  border-radius: 50%;
+  background: rgba(125,211,252,0.15);
+  opacity: 0;
+  animation: particleMove linear infinite;
+}
+
+@keyframes particleMove {
+  0% { transform: translateY(0px) translateX(0px); opacity: 0; }
+  10% { opacity: 1; }
+  100% { transform: translateY(-400px) translateX(200px); opacity: 0; }
+}
+
+.shape {
+  position: absolute;
+  width: var(--size, 50px);
+  height: var(--size, 50px);
+  background: rgba(125,211,252,0.05);
+  border-radius: 50%;
+  left: var(--left, 50%);
+  top: var(--top, 50%);
+  animation: floatShape linear infinite;
+  animation-duration: var(--duration, 30s);
+  z-index: 0;
+}
+
+@keyframes floatShape {
+  0% { transform: translateY(0) rotate(0deg); }
+  50% { transform: translateY(-40px) rotate(180deg); }
+  100% { transform: translateY(0) rotate(360deg); }
 }
 
 #boot-screen {
@@ -38,98 +90,163 @@ html,body {
 
 #login-screen {
   position: fixed;
-  inset:0;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 10000;
   background: linear-gradient(135deg, #0b1220, #1a1f36, #0b1220);
-  display:flex;
-  align-items:center;
-  justify-content:center;
-  z-index:10000;
+  background-size: 400% 400%;
+  animation: gradientShift 20s ease infinite;
+  overflow: hidden;
   backdrop-filter: blur(18px);
+}
+
+@keyframes gradientShift {
+  0% { background-position: 0% 50%; }
+  50% { background-position: 100% 50%; }
+  100% { background-position: 0% 50%; }
+}
+
+#particle-container {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  z-index: 1;
+}
+
+.particle {
+  position: absolute;
+  width: 4px;
+  height: 4px;
+  border-radius: 50%;
+  background: rgba(125,211,252,0.5);
+  opacity: 0;
+  animation: particleMove linear infinite;
 }
 
 #login-box {
   position: relative;
-  background: rgba(35,35,55,0.65);
-  padding:36px 44px;
-  border-radius:18px;
-  border: 1px solid rgba(255,255,255,0.1);
-  display:flex;
-  flex-direction:column;
-  align-items:center;
-  width:420px;
-  color:#fff;
-  text-align:center;
-  opacity:0;
-  transform: translateY(-20px) scale(0.95);
-  animation: loginBoxIn 0.7s ease forwards;
+  background: rgba(35,35,55,0.5);
+  padding: 42px 52px;
+  border-radius: 20px;
+  border: 1px solid rgba(125,211,252,0.25);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  width: 420px;
+  color: #fff;
+  text-align: center;
+  opacity: 0;
+  transform: translateY(-30px) scale(0.975);
   backdrop-filter: blur(28px) saturate(160%);
+  box-shadow: inset 0 0 6px rgba(255,255,255,0.05),
+              0 0 16px rgba(125,211,252,0.15),
+              0 8px 12px rgba(0,0,0,0.3);
+  animation: loginBoxPulse 6s ease-in-out infinite alternate,
+             loginBoxIn 0.8s ease forwards;
 }
+
+@keyframes loginBoxPulse {
+  0% {
+    transform: translateY(-1px) scale(1);
+    box-shadow: 0 0 16px rgba(14,165,233,0.2),
+                0 0 20px rgba(124,58,237,0.15);
+  }
+  100% {
+    transform: translateY(1px) scale(1.005);
+    box-shadow: 0 0 22px rgba(14,165,233,0.25),
+                0 0 28px rgba(124,58,237,0.2);
+  }
+}
+
 #login-box h2 {
-  margin-bottom:22px;
-  color:#7dd3fc;
-  font-size:1.55rem;
-  letter-spacing:0.5px;
-  text-shadow: 0 0 2px rgba(0,255,255,0.1);
+  margin-bottom: 25px;
+  color: #7dd3fc;
+  font-size: 1.55rem;
+  letter-spacing: 0.5px;
+  text-shadow: 0 0 4px rgba(125,211,252,0.2);
+  animation: fadeIn 0.8s ease forwards;
 }
 
 #login-box input {
-  width:100%;
-  padding:12px 14px;
-  margin:8px 0;
-  border-radius:10px;
-  border:none;
-  outline:none;
-  font-size:1rem;
-  background: rgba(255,255,255,0.06);
-  color:#fff;
-  transition: all 0.3s ease;
+  width: 100%;
+  padding: 14px 16px;
+  margin: 10px 0;
+  border-radius: 12px;
+  border: none;
+  outline: none;
+  font-size: 1rem;
+  background: rgba(255,255,255,0.04);
+  color: #fff;
+  transition: all 0.3s ease, box-shadow 0.4s ease;
+  border-bottom: 2px solid rgba(255,255,255,0.15);
 }
 
 #login-box input:focus {
-  transform: scale(1.03);
-  border: 1px solid #7dd3fc;
-  box-shadow: 0 0 4px rgba(125,211,252,0.1);
+  transform: scale(1.02);
+  border-color: #0ea5e9;
+  box-shadow: 0 2px 10px rgba(14,165,233,0.3);
 }
 
 #login-buttons {
-  display:flex;
-  justify-content:space-between;
-  width:100%;
-  margin-top:14px;
-}
-#login-buttons button {
-  flex:1;
-  margin:0 6px;
-  padding:10px 0;
-  border-radius:10px;
-  border:none;
-  cursor:pointer;
-  background: linear-gradient(90deg,#0ea5e9,#7c3aed,#0ea5e9);
-  color:white;
-  font-weight:600;
-  font-size:0.95rem;
-  background-size: 200% 100%;
-  transition: all 0.25s ease, background-position 1.5s ease;
-  box-shadow: 0 0 4px rgba(0,255,255,0.08);
-}
-#login-buttons button:hover {
-  transform: scale(1.03);
-  background-position: 0 0;
-  box-shadow: 0 0 8px rgba(0,255,255,0.12);
+  display: flex;
+  justify-content: space-between;
+  width: 100%;
+  margin-top: 18px;
 }
 
-#login-error { margin-top:14px; color:#f87171; font-size:0.88rem; }
-.hidden { display:none; }
+#login-buttons button {
+  flex: 1;
+  margin: 0 6px;
+  padding: 12px 0;
+  border-radius: 12px;
+  border: none;
+  cursor: pointer;
+  background: linear-gradient(90deg,#0ea5e9,#7c3aed,#0ea5e9);
+  color: #fff;
+  font-weight: 600;
+  font-size: 1rem;
+  background-size: 200% 100%;
+  transition: all 0.25s ease, background-position 1.5s ease, box-shadow 0.3s ease;
+  box-shadow: 0 0 4px rgba(0,255,255,0.1);
+}
+
+#login-buttons button:hover {
+  transform: scale(1.03);
+  background-position: 100% 0;
+  box-shadow: 0 0 14px rgba(125,211,252,0.25);
+}
+
+#login-error {
+  margin-top: 14px;
+  color: #f87171;
+  font-size: 0.88rem;
+}
+
+.hidden { display: none; }
+
+@keyframes loginBoxIn {
+  from { opacity: 0; transform: translateY(-30px) scale(0.975); }
+  to { opacity: 1; transform: translateY(0) scale(1); }
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(-5px); }
+  to { opacity: 1; transform: translateY(0); }
+}
 
 #desktop-icons {
   position:absolute; top:22px; left:22px;
   display:flex; flex-direction:column; gap:18px;
+  z-index: 2;
 }
 .icon {
   width:88px; text-align:center; color:white; cursor:pointer;
   padding:6px; border-radius:8px;
   transition: background .12s, transform .08s, box-shadow .2s ease;
   backdrop-filter: blur(4px);
+  z-index: 2;
 }
 .icon img { width:48px; height:48px; margin:0 auto 6px; display:block; }
 .icon:hover {
@@ -147,8 +264,8 @@ html,body {
               inset 0 1px 0 rgba(255,255,255,0.05),
               0 0 4px rgba(0,255,255,0.05);
   backdrop-filter: blur(10px) saturate(160%);
+  z-index: 2;
 }
-#taskbar-left { display:flex; align-items:center; gap:8px; }
 
 #start-button {
   width:40px; height:36px; border-radius:8px;
@@ -317,15 +434,13 @@ textarea {
 }
 .explorer-button:hover {
   background: rgba(255,255,255,0.12);
-  box-shadow: 0 0 4px rgba(0,255,255,0.08);
+  box-shadow: 0 0 4px rgba(255,255,255,0.08);
   transform: translateY(-1px);
 }
 .explorer-button:active {
   background: rgba(255,255,255,0.15);
-  box-shadow: inset 0 0 3px rgba(0,255,255,0.05);
+  box-shadow: inset 0 0 3px rgba(0,0,0,0.05);
   transform: translateY(0);
 }
 
 @keyframes notifyShow { from { opacity:0; transform: translateY(-12px);} to {opacity:1; transform: translateY(0);} }
-@keyframes fadeIn { from { opacity:0; } to { opacity:1; } }
-@keyframes loginBoxIn { from { opacity:0; transform: translateY(-20px) scale(0.95); } to { opacity:1; transform: translateY(0) scale(1); } }
