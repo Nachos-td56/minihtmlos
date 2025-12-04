@@ -3,6 +3,7 @@
 <head>
   <meta charset="utf-8" />
   <title>MiniOS</title>
+  <link rel="icon" type="image/x-icon" href="images/favicon.ico">
   <meta name="viewport" content="width=device-width,initial-scale=1" />
   <link rel="stylesheet" href="style.css" />
   <style>
@@ -42,6 +43,11 @@
     </div>
 
     <div id="login-screen">
+	  <div id="particle-container"></div>
+      <div class="shape" style="--size:60px; --left:10%; --top:20%; --duration:18s;"></div>
+      <div class="shape" style="--size:80px; --left:70%; --top:10%; --duration:25s;"></div>
+      <div class="shape" style="--size:40px; --left:50%; --top:60%; --duration:20s;"></div>
+
       <div id="login-box">
         <h2>Welcome to MiniOS</h2>
         <input type="text" id="login-username" placeholder="Username" />
@@ -93,6 +99,7 @@
     <script src="snake.js"></script>
     <script src="pong.js"></script>
     <script src="cube.js"></script>
+	<script src="particles.js"></script>
   </div>
 </body>
 </html>
