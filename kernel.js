@@ -110,8 +110,13 @@ function addTaskbarButton(id, app, title) {
 
 function makeDraggable(win) {
     const bar = win.querySelector(".titlebar");
-    let dragging = false, offsetX = 0, offsetY = 0;
-    let lastX = 0, lastY = 0, req = null;
+    let dragging = false;
+    let offsetX = 0, offsetY = 0;
+    let currentX = 0, currentY = 0;
+
+    const rect = win.getBoundingClientRect();
+    currentX = win.offsetLeft;
+    currentY = win.offsetTop;
 
     bar.addEventListener("mousedown", (e) => {
         dragging = true;
@@ -119,27 +124,25 @@ function makeDraggable(win) {
         offsetY = e.clientY - win.offsetTop;
         win.style.zIndex = ++z;
         document.body.style.cursor = "grabbing";
-        lastX = e.clientX;
-        lastY = e.clientY;
+        win.style.transition = "none";
     });
 
     document.addEventListener("mouseup", () => {
         dragging = false;
         document.body.style.cursor = "";
-        if (req) cancelAnimationFrame(req);
     });
 
     document.addEventListener("mousemove", (e) => {
         if (!dragging) return;
-        lastX = e.clientX;
-        lastY = e.clientY;
-        if (!req) {
-            req = requestAnimationFrame(() => {
-                win.style.left = (lastX - offsetX) + "px";
-                win.style.top = (lastY - offsetY) + "px";
-                req = null;
-            });
-        }
+
+        const targetX = e.clientX - offsetX;
+        const targetY = e.clientY - offsetY;
+
+        currentX += (targetX - currentX) * 0.5;
+        currentY += (targetY - currentY) * 0.5;
+
+        win.style.left = currentX + "px";
+        win.style.top = currentY + "px";
     });
 }
 
