@@ -13,8 +13,8 @@ function openUnityGame() {
 
     const content = openWindow("unitygame", "Project Car Sandbox", contentHTML, 920, 680);
 
-    // Optional: bigger window size for most Unity games
-    // You can change 920×680 to whatever fits your game best
+    // Optional, bigger window size for most Unity games
+    // Can change 920×680 to whatever fits your game best
 
     const closeBtn = content.closest(".window").querySelector(".close");
     closeBtn.addEventListener("click", () => {
