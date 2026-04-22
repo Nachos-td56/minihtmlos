@@ -94,12 +94,8 @@ function addTaskbarButton(id, app, title) {
         terminal: "💻",
         snake: "🐍",
         pong: "🏓",
-<<<<<<< HEAD
 		cube: "🧊",
 		unitygame: "🎮"
-=======
-		cube: "🧊"
->>>>>>> 8c709f156264f81ca4481b4184529abcb8d0d86f
     };
     btn.innerText = iconMap[app] || "•";
 
@@ -320,12 +316,8 @@ document.addEventListener("DOMContentLoaded", async () => {
         terminal: () => openTerminal(),
         snake: () => openSnakeGame(),
         pong: () => openPongGame(),
-<<<<<<< HEAD
 		cube: () => openCubeApp(),
 		unitygame: () => openUnityGame()
-=======
-		cube: () => openCubeApp()
->>>>>>> 8c709f156264f81ca4481b4184529abcb8d0d86f
     };
 
     [...icons, ...startMenu.querySelectorAll("[data-app]")].forEach(el => {
