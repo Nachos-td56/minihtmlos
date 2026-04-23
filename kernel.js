@@ -28,6 +28,7 @@ function openWindow(app, title, innerHTML, width = 560, height = 360) {
     document.body.appendChild(win);
     win.style.opacity = 0;
     win.style.transform = "scale(0.9)";
+    
     requestAnimationFrame(() => {
         win.style.transition = "all 0.25s ease";
         win.style.opacity = 1;
@@ -94,8 +95,8 @@ function addTaskbarButton(id, app, title) {
         terminal: "💻",
         snake: "🐍",
         pong: "🏓",
-		cube: "🧊",
-		unitygame: "🎮"
+        cube: "🧊",
+        unitygame: "🎮"
     };
     btn.innerText = iconMap[app] || "•";
 
@@ -113,11 +114,8 @@ function makeDraggable(win) {
     const bar = win.querySelector(".titlebar");
     let dragging = false;
     let offsetX = 0, offsetY = 0;
-    let currentX = 0, currentY = 0;
-
-    const rect = win.getBoundingClientRect();
-    currentX = win.offsetLeft;
-    currentY = win.offsetTop;
+    let currentX = win.offsetLeft;
+    let currentY = win.offsetTop;
 
     bar.addEventListener("mousedown", (e) => {
         dragging = true;
@@ -135,7 +133,6 @@ function makeDraggable(win) {
 
     document.addEventListener("mousemove", (e) => {
         if (!dragging) return;
-
         const targetX = e.clientX - offsetX;
         const targetY = e.clientY - offsetY;
 
@@ -156,7 +153,6 @@ document.addEventListener("DOMContentLoaded", async () => {
     const clockEl = document.getElementById("clock");
     const shutdown = document.getElementById("shutdown");
     const icons = document.querySelectorAll(".icon");
-    const taskbarApps = document.getElementById("taskbar-apps");
     const notifications = document.getElementById("notifications");
     const loginScreen = document.getElementById("login-screen");
     const loginUsername = document.getElementById("login-username");
@@ -174,14 +170,40 @@ document.addEventListener("DOMContentLoaded", async () => {
         console.error("Failed to load keys:", e);
     }
 
-    let disk = JSON.parse(localStorage.getItem("MiniOS_Disk") || "{}");
+    function loadDisk() {
+        const raw = localStorage.getItem("MiniOS_Disk");
+        if (!raw) return { accounts: {}, files: {} };
+
+        try {
+            const json = LZString.decompressFromUTF16(raw);
+            return JSON.parse(json);
+        } catch {
+            return JSON.parse(raw);
+        }
+    }
+
+    let disk = loadDisk();
     if (!disk.accounts) disk.accounts = {};
     if (!disk.files) disk.files = {};
-    if (!disk.accounts["admin"]) disk.accounts["admin"] = { password: "ad", files: {}, key: null };
+    if (!disk.accounts["admin"]) {
+        disk.accounts["admin"] = { password: "ad", files: {}, key: null };
+    }
 
     let currentUser = null;
     let fileSystem = {};
-    const saveDisk = () => localStorage.setItem("MiniOS_Disk", JSON.stringify(disk));
+
+    function saveDisk() {
+        const json = JSON.stringify(disk);
+        const compressed = LZString.compressToUTF16(json);
+        localStorage.setItem("MiniOS_Disk", compressed);
+    }
+
+    function saveCurrentUserFiles() {
+        if (currentUser) {
+            disk.accounts[currentUser].files = JSON.parse(JSON.stringify(fileSystem));
+            saveDisk();
+        }
+    }
 
     window.notify = (msg) => {
         const el = document.createElement("div");
@@ -266,18 +288,18 @@ document.addEventListener("DOMContentLoaded", async () => {
     loginBtn.addEventListener("click", () => login(loginUsername.value.trim(), loginPassword.value.trim()));
     signupBtn.addEventListener("click", () => signup(loginUsername.value.trim(), loginPassword.value.trim()));
 
+    // Boot sequence
     boot.style.display = "flex";
     boot.style.opacity = 1;
     loginScreen.style.display = "none";
 
-    const bootDuration = 2000;
     setTimeout(() => {
         boot.classList.add("fade-out");
         setTimeout(() => {
             boot.style.display = "none";
             loginScreen.style.display = "flex";
         }, 900);
-    }, bootDuration);
+    }, 2000);
 
     const updateClock = () => clockEl.textContent = new Date().toLocaleTimeString();
     updateClock();
@@ -285,12 +307,15 @@ document.addEventListener("DOMContentLoaded", async () => {
 
     startButton.addEventListener("click", e => {
         e.stopPropagation();
-        startMenu.style.display = startMenu.style.display === "flex" ? "none" : "flex";
-        startMenu.style.opacity = 0;
-        requestAnimationFrame(() => {
-            startMenu.style.transition = "opacity 0.2s ease";
-            startMenu.style.opacity = 1;
-        });
+        const isVisible = startMenu.style.display === "flex";
+        startMenu.style.display = isVisible ? "none" : "flex";
+        if (!isVisible) {
+            startMenu.style.opacity = 0;
+            requestAnimationFrame(() => {
+                startMenu.style.transition = "opacity 0.2s ease";
+                startMenu.style.opacity = 1;
+            });
+        }
     });
 
     window.addEventListener("click", (e) => {
@@ -314,10 +339,10 @@ document.addEventListener("DOMContentLoaded", async () => {
         explorer: () => openExplorer(),
         notepad: (filename, content) => openNotepad(filename, content),
         terminal: () => openTerminal(),
-        snake: () => openSnakeGame(),
-        pong: () => openPongGame(),
-		cube: () => openCubeApp(),
-		unitygame: () => openUnityGame()
+        snake: () => typeof openSnakeGame === "function" && openSnakeGame(),
+        pong: () => typeof openPongGame === "function" && openPongGame(),
+        cube: () => typeof openCubeApp === "function" && openCubeApp(),
+        unitygame: () => typeof openUnityGame === "function" && openUnityGame()
     };
 
     [...icons, ...startMenu.querySelectorAll("[data-app]")].forEach(el => {
@@ -337,11 +362,13 @@ document.addEventListener("DOMContentLoaded", async () => {
 
     function renderExplorer(container) {
         const keys = Object.keys(fileSystem).sort();
-        let html = `<div style="display:flex;gap:8px;margin-bottom:8px">
-                       <button id="newfile" class="explorer-button">+ New</button>
-                       <button id="refresh" class="explorer-button">Refresh</button>
-                   </div>`;
-        html += `<ul style="padding-left:14px">`;
+        let html = `
+            <div style="display:flex;gap:8px;margin-bottom:8px">
+                <button id="newfile" class="explorer-button">+ New</button>
+                <button id="refresh" class="explorer-button">Refresh</button>
+            </div>
+            <ul style="padding-left:14px">
+        `;
         if (!keys.length) html += `<li><i>No files</i></li>`;
         else keys.forEach(k => html += `<li data-file="${k}" style="padding:6px;border-radius:6px;cursor:default">📄 ${k}</li>`);
         html += `</ul>`;
@@ -364,8 +391,7 @@ document.addEventListener("DOMContentLoaded", async () => {
             li.addEventListener("contextmenu", (e) => {
                 e.preventDefault();
                 const f = li.dataset.file;
-                const choice = confirm(`Delete "${f}"?`);
-                if (choice) {
+                if (confirm(`Delete "${f}"?`)) {
                     delete fileSystem[f];
                     saveCurrentUserFiles();
                     renderExplorer(container);
@@ -377,7 +403,7 @@ document.addEventListener("DOMContentLoaded", async () => {
 
     function openNotepad(filename, content = "") {
         if (fileSystem[filename] !== undefined) content = fileSystem[filename];
-        const cont = openWindow("notepad", `Notepad - ${filename}`, `<textarea id="np-area">${escapeHtml(content)}</textarea>`, 560, 420);
+        const cont = openWindow("notepad", `Notepad - ${filename}`, `<textarea id="np-area" style="width:100%; height:100%; box-sizing:border-box;">${escapeHtml(content)}</textarea>`, 560, 420);
         const ta = cont.querySelector("#np-area");
         ta.addEventListener("input", () => {
             fileSystem[filename] = ta.value;
@@ -387,11 +413,8 @@ document.addEventListener("DOMContentLoaded", async () => {
 
     function openTerminal() {
         const html = `
-            <div id="termout" style="font-family:monospace; font-size:12px; color:#6aff6a; background:#111; padding:8px; height:calc(100% - 30px); overflow-y:auto;">
-                Welcome to MiniOS Terminal
-                Type 'help' for commands.
-            </div>
-            <input id="termin" placeholder="Enter command and press Enter" style="width:100%; box-sizing:border-box; padding:4px; font-family:monospace; background:#222; color:#6aff6a; border:none; outline:none;" />
+            <div id="termout" style="font-family:monospace; font-size:12px; color:#6aff6a; background:#111; padding:8px; height:calc(100% - 30px); overflow-y:auto; white-space:pre-wrap;">Welcome to MiniOS Terminal\nType 'help' for commands.</div>
+            <input id="termin" placeholder="Enter command..." style="width:100%; box-sizing:border-box; padding:4px; font-family:monospace; background:#222; color:#6aff6a; border:none; outline:none;" />
         `;
         const cont = openWindow("terminal", "Terminal", html, 520, 340);
         const out = cont.querySelector("#termout");
@@ -414,71 +437,35 @@ document.addEventListener("DOMContentLoaded", async () => {
         const base = parts[0]?.toLowerCase();
         switch (base) {
             case "help":
-                outEl.textContent += "\nCommands: help, ls, mkdir <name>, cat <file>, rm <file>, edit <file>, clear, time, about, print <text>, alert <text>, exportdisk, importdisk, open <url>, eval <js>, snake, notify <text>, pong";
-                if (currentUser === "Administrator") outEl.textContent += ", clralldata";
+                outEl.textContent += "\nCommands: help, ls, mkdir <name>, cat <file>, rm <file>, edit <file>, clear, time, about, print <text>, alert <text>, exportdisk, importdisk, open <url>, eval <js>, snake, notify <text>, pong, cube, clralldata, projectcarsandbox";
                 break;
             case "ls":
-                outEl.textContent += `\n${Object.keys(fileSystem).length ? Object.keys(fileSystem).join("\n") : "(no files)"}`;
+                outEl.textContent += `\n${Object.keys(fileSystem).join("\n") || "(no files)"}`;
                 break;
-            case "mkdir": {
-                const name = parts[1];
-                if (!name) outEl.textContent += "\nSpecify folder name";
-                else {
-                    fileSystem[name] = {};
+            case "mkdir":
+                if (parts[1]) {
+                    fileSystem[parts[1]] = {};
                     saveCurrentUserFiles();
-                    outEl.textContent += `\nFolder "${name}" created`;
-                    notify(`Folder "${name}" created`);
-                }
+                    outEl.textContent += `\nFolder "${parts[1]}" created`;
+                } else outEl.textContent += "\nSpecify folder name";
                 break;
-            }
-            case "cat": {
-                const f = parts[1];
-                outEl.textContent += `\n${fileSystem[f] ?? "File not found."}`;
+            case "cat":
+                outEl.textContent += `\n${fileSystem[parts[1]] ?? "File not found."}`;
                 break;
-            }
-            case "rm": {
-                const f = parts[1];
-                if (!f) outEl.textContent += "\nSpecify file";
-                else if (fileSystem[f]) {
-                    delete fileSystem[f];
+            case "rm":
+                if (fileSystem[parts[1]]) {
+                    delete fileSystem[parts[1]];
                     saveCurrentUserFiles();
-                    outEl.textContent += `\nDeleted ${f}`;
-                    notify(`File "${f}" deleted`);
+                    outEl.textContent += `\nDeleted ${parts[1]}`;
                 } else outEl.textContent += "\nFile not found.";
                 break;
-            }
-            case "edit": {
-                const f = parts[1];
-                if (!f) outEl.textContent += "\nSpecify file";
-                else apps.notepad(f, fileSystem[f] ?? "");
-                break;
-            }
             case "clear":
                 outEl.textContent = "";
                 break;
             case "time":
                 outEl.textContent += `\n${new Date().toString()}`;
                 break;
-            case "about":
-                outEl.textContent += "\nMiniOS v1.3 — Browser-based OS simulation.";
-                break;
-            case "print": {
-                const msg = parts.slice(1).join(" ");
-                console.log("[MiniOS print]", msg);
-                outEl.textContent += `\n${msg}`;
-                break;
-            }
-            case "alert": {
-                const msg = parts.slice(1).join(" ");
-                alert(msg || "(empty)");
-                break;
-            }
-            case "notify": {
-                const msg = parts.slice(1).join(" ");
-                notify(msg);
-                break;
-            }
-            case "exportdisk": {
+            case "exportdisk":
                 const blob = new Blob([JSON.stringify(disk)], { type: "application/json" });
                 const a = document.createElement("a");
                 a.href = URL.createObjectURL(blob);
@@ -486,36 +473,70 @@ document.addEventListener("DOMContentLoaded", async () => {
                 a.click();
                 outEl.textContent += "\nDisk exported";
                 break;
-            }
-            case "importdisk": {
-                const input = document.createElement("input");
-                input.type = "file";
-                input.accept = ".json";
-                input.onchange = e => {
-                    const file = e.target.files[0];
+            case "importdisk":
+                const fileIn = document.createElement("input");
+                fileIn.type = "file";
+                fileIn.onchange = (e) => {
                     const reader = new FileReader();
                     reader.onload = () => {
                         try {
                             disk = JSON.parse(reader.result);
                             saveDisk();
-                            outEl.textContent += "\nDisk imported successfully";
-                        } catch {
-                            outEl.textContent += "\nFailed to import disk";
-                        }
+                            outEl.textContent += "\nDisk imported";
+                        } catch { outEl.textContent += "\nImport failed"; }
                     };
-                    reader.readAsText(file);
+                    reader.readAsText(e.target.files[0]);
                 };
-                input.click();
+                fileIn.click();
+                break;
+			case "clralldata":
+                if (currentUser === "admin") {
+                    if (confirm("CRITICAL WARNING: This will delete ALL accounts and ALL files. This cannot be undone. Proceed?")) {
+                        // Reset disk to factory defaults
+                        disk = { accounts: {}, files: {} };
+                        saveDisk();
+                        outEl.textContent += "\nSystem disk wiped. Restarting...";
+            
+                        // Short delay so the user can see the message before the reload
+                        setTimeout(() => location.reload(), 1500);
+                    }
+                } else {
+                    outEl.textContent += "\nPermission denied: Administrator privileges required.";
+                }
+                break;
+			case "edit": {
+                const f = parts[1];
+                if (!f) outEl.textContent += "\nSpecify file";
+                else apps.notepad(f, fileSystem[f] ?? "");
                 break;
             }
-            case "open": {
+			case "about":
+                outEl.textContent += "\nMiniOS v1.3 — Browser-based OS simulation.";
+                break;
+			case "print": {
+                const msg = parts.slice(1).join(" ");
+                console.log("[MiniOS print]", msg);
+                outEl.textContent += `\n${msg}`;
+                break;
+            }
+			case "alert": {
+                const msg = parts.slice(1).join(" ");
+                alert(msg || "(empty)");
+                break;
+            }
+			case "notify": {
+                const msg = parts.slice(1).join(" ");
+                notify(msg);
+                break;
+            }
+			case "open": {
                 const url = parts.slice(1).join(" ");
                 if (!url) outEl.textContent += "\nSpecify URL";
                 else window.open(url, "_blank");
                 break;
             }
-            case "eval": {
-                if (currentUser !== "admin") outEl.textContent += "\nPermission denied";
+			case "eval": {
+                if (currentUser !== "admin") outEl.textContent += "\nPermission denied: Administrator privileges required.";
                 else {
                     try {
                         const res = eval(parts.slice(1).join(" "));
@@ -526,32 +547,24 @@ document.addEventListener("DOMContentLoaded", async () => {
                 }
                 break;
             }
-            case "snake":
+			case "snake":
                 apps.snake();
                 break;
             case "pong":
                 apps.pong();
                 break;
-            case "clralldata":
-                if (currentUser === "admin" && confirm("Delete all disk data?")) {
-                    disk = { accounts: {}, files: {} };
-                    saveDisk();
-                    outEl.textContent += "\nAll data cleared";
-                } else outEl.textContent += "\nPermission denied";
-                break;
+			case "projectcarsandbox":
+			    apps.unitygame();
+				break;
+			case "cube":
+			    apps.cube();
+				break;
             default:
                 if (base) outEl.textContent += `\nUnknown command "${base}"`;
         }
     }
 
-    function saveCurrentUserFiles() {
-        if (currentUser) {
-            disk.accounts[currentUser].files = JSON.parse(JSON.stringify(fileSystem));
-            saveDisk();
-        }
-    }
-	
-	window.addEventListener("beforeunload", saveCurrentUserFiles);
+    window.addEventListener("beforeunload", saveCurrentUserFiles);
 
     function escapeHtml(text) {
         return text.replace(/[&<>"']/g, m => ({ "&":"&amp;", "<":"&lt;", ">":"&gt;", '"':"&quot;", "'":"&#039;" })[m]);
