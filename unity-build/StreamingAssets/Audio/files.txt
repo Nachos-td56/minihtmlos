@@ -1,6 +1,1 @@
-carfull.kysa
-carfullspooldown.kysa
-carhalf.kysa
-carhorn.kysa
-caridle.kysa
 lobby-background-0.kysa
